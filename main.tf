@@ -13,9 +13,13 @@ data "aws_vpc" "default" {
   default = true
 }
 
-data "aws_subnet_ids" "default" {
-  vpc_id = data.aws_vpc.default.id
+data "aws_subnets" "default" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
 }
+
 
 # Data sources to look up IAM roles (ensure these exist in your account).
 data "aws_iam_role" "eks_cluster_role" {
@@ -32,7 +36,7 @@ module "eks_cluster" {
   cluster_name     = var.cluster_name
   allowed_ssh_cidr = var.allowed_ssh_cidr
   vpc_id           = data.aws_vpc.default.id
-  subnet_ids       = data.aws_subnet_ids.default.ids
+  subnet_ids       = data.aws_subnets.default.ids
   cluster_role_arn = data.aws_iam_role.eks_cluster_role.arn
 }
 
@@ -42,7 +46,7 @@ module "infrapool" {
   cluster_name     = var.cluster_name
   node_group_name  = var.infrapool_name
   desired_capacity = var.infra_node_count
-  subnet_ids       = data.aws_subnet_ids.default.ids
+  subnet_ids       = data.aws_subnets.default.ids
   node_role_arn    = data.aws_iam_role.eks_node_role.arn
   instance_type    = var.instance_type
 }
@@ -53,7 +57,7 @@ module "corepool" {
   cluster_name     = var.cluster_name
   node_group_name  = var.corepool_name
   desired_capacity = var.core_node_count
-  subnet_ids       = data.aws_subnet_ids.default.ids
+  subnet_ids       = data.aws_subnets.default.ids
   node_role_arn    = data.aws_iam_role.eks_node_role.arn
   instance_type    = var.instance_type
 }

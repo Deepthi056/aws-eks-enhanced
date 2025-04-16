@@ -22,7 +22,7 @@ variable "core_node_count" {
 variable "allowed_ssh_cidr" {
   description = "CIDR block allowed SSH access (typically your public IP)"
   type        = string
-  default     = "49.207.215.73/32"
+  default     = "49.207.235.217/32"
 }
 
 variable "instance_type" {

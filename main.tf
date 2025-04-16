@@ -18,7 +18,13 @@ data "aws_subnets" "default" {
     name   = "vpc-id"
     values = [data.aws_vpc.default.id]
   }
+  filter {
+    name   = "availability-zone"
+    # EKS supports us-east-1a, us-east-1b, us-east-1c, us-east-1d, us-east-1f in us-east-1.
+    values = ["us-east-1a", "us-east-1b", "us-east-1c", "us-east-1d", "us-east-1f"]
+  }
 }
+
 
 
 # Data sources to look up IAM roles (ensure these exist in your account).

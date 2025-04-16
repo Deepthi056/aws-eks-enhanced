@@ -55,6 +55,7 @@ module "infrapool" {
   subnet_ids       = data.aws_subnets.default.ids
   node_role_arn    = data.aws_iam_role.eks_node_role.arn
   instance_type    = var.instance_type
+  depends_on = [module.eks_cluster.aws_eks_cluster.this]
 }
 
 # Core Node Group Module.
@@ -66,4 +67,5 @@ module "corepool" {
   subnet_ids       = data.aws_subnets.default.ids
   node_role_arn    = data.aws_iam_role.eks_node_role.arn
   instance_type    = var.instance_type
+  depends_on = [module.eks_cluster.aws_eks_cluster.this]
 }

@@ -1,0 +1,5 @@
+aws_region       = "us-east-1"
+instance_type    = "t2.micro"
+infrapool_name   = "infrapool"
+corepool_name    = "corepool"
+allowed_ssh_cidr = "49.207.215.73/32" 

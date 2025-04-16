@@ -5,8 +5,8 @@ set -e
 # WARNING: Hardcoding AWS credentials is for learning purposes ONLY.
 # Do NOT hardcode credentials in production environments.
 # =====================================================================
-export AWS_ACCESS_KEY_ID="YOUR_AWS_ACCESS_KEY_ID"
-export AWS_SECRET_ACCESS_KEY="YOUR_AWS_SECRET_ACCESS_KEY"
+export AWS_ACCESS_KEY_ID="AKIAQ3EGSIFOIO2ON3SX"
+export AWS_SECRET_ACCESS_KEY="haJxrUNMImdZdXX6mDYjLdWQYhMbXkgufeWadgrz"
 export AWS_DEFAULT_REGION="us-east-1"
 
 # Validate required parameters passed from the freestyle job.
@@ -44,7 +44,7 @@ echo "Cluster Name:     $CLUSTER_NAME"
 echo "-------------------------------------"
 
 # Define backend S3 configuration parameters.
-BACKEND_BUCKET="your-tfstate-bucket"  # Replace with your existing S3 bucket name (must pre-exist)
+BACKEND_BUCKET="awsdpbucket"  # Replace with your existing S3 bucket name (must pre-exist)
 BACKEND_REGION="us-east-1"
 # Build the tfstate file key using the cluster name.
 BACKEND_KEY="eks-clusters/${CLUSTER_NAME}/terraform.tfstate"

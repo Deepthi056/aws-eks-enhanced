@@ -50,7 +50,6 @@ BACKEND_REGION="us-east-1"
 BACKEND_KEY="eks-clusters/${CLUSTER_NAME}/terraform.tfstate"
 
 # Initialize Terraform (in the current directory, since all files are here).
-#terraform init   -backend-config="bucket=${BACKEND_BUCKET}"   -backend-config="key=${BACKEND_KEY}"   -backend-config="region=${BACKEND_REGION}"
 echo "Initializing backend for ${CLUSTER_NAME}..."
 terraform init -reconfigure \
   -backend-config="bucket=awsdpbucket" \

@@ -1,75 +1,82 @@
 #!/bin/bash
-set -euo pipefail
+set -e
 
-# ------------------------------------------------
-# WARNING: Hardcoding AWS creds is for demo only.
-# ------------------------------------------------
+# =====================================================================
+# WARNING: Hardcoding AWS credentials is for learning purposes ONLY.
+# Do NOT hardcode credentials in production environments.
+# =====================================================================
 export AWS_ACCESS_KEY_ID="AKIAQ3EGSIFOIO2ON3SX"
 export AWS_SECRET_ACCESS_KEY="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"
 export AWS_DEFAULT_REGION="us-east-1"
 
-# 1) Validate inputs
-for v in CLOUD_TYPE INFRA_NODE_COUNT CORE_NODE_COUNT ACTION CLUSTER_NAME; do
-  if [[ -z "${!v:-}" ]]; then
-    echo " Missing required var: $v"
-    exit 1
-  fi
-done
-
-echo "  Cloud Type:          $CLOUD_TYPE"
-echo "  Infra Nodes:         $INFRA_NODE_COUNT"
-echo "  Core Nodes:          $CORE_NODE_COUNT"
-echo "  Action:              $ACTION"
-echo "  Cluster Name:        $CLUSTER_NAME"
-
-# 2) Backend config
-BUCKET="awsdpbucket"
-REGION="us-east-1"
-KEY="eks-clusters/${CLUSTER_NAME}/terraform.tfstate"
-
-echo " Using S3 state: s3://$BUCKET/$KEY"
-
-# 3) Ensure you have in your main.tf:
-#    terraform { backend "s3" {} }
-grep -Rq 'backend "s3" {}' main.tf || {
-  echo " main.tf is missing: terraform { backend \"s3\" {} }"
+# Validate required parameters passed from the freestyle job.
+if [ -z "$CLOUD_TYPE" ]; then
+  echo "Error: CLOUD_TYPE is not set. Exiting."
   exit 1
-}
+fi
 
-# 4) Clean any prior init metadata
-echo " Cleaning .terraform/ and lock file…"
+if [ -z "$INFRA_NODE_COUNT" ]; then
+  echo "Error: INFRA_NODE_COUNT is not set. Exiting."
+  exit 1
+fi
+
+if [ -z "$CORE_NODE_COUNT" ]; then
+  echo "Error: CORE_NODE_COUNT is not set. Exiting."
+  exit 1
+fi
+
+if [ -z "$ACTION" ]; then
+  echo "Error: ACTION is not set. Exiting."
+  exit 1
+fi
+
+if [ -z "$CLUSTER_NAME" ]; then
+  echo "Error: CLUSTER_NAME is not set. Exiting."
+  exit 1
+fi
+
+echo "-------------------------------------"
+echo "Cloud Type:       $CLOUD_TYPE"
+echo "Infra Node Count: $INFRA_NODE_COUNT"
+echo "Core Node Count:  $CORE_NODE_COUNT"
+echo "Action:           $ACTION"
+echo "Cluster Name:     $CLUSTER_NAME"
+echo "-------------------------------------"
+
+# Define backend S3 configuration parameters.
+BACKEND_BUCKET="awsdpbucket"  # Replace with your existing S3 bucket name (must pre-exist)
+BACKEND_REGION="us-east-1"
+# Build the tfstate file key using the cluster name.
+BACKEND_KEY="eks-clusters/${CLUSTER_NAME}/terraform.tfstate"
+
+# Initialize Terraform (in the current directory, since all files are here).
+echo "Initializing backend for ${CLUSTER_NAME}..."
 rm -rf .terraform .terraform.lock.hcl
+terraform init -reconfigure \
+  -backend-config="bucket=awsdpbucket" \
+  -backend-config="region=us-east-1" \
+  -backend-config="key=eks-clusters/${CLUSTER_NAME}/terraform.tfstate"
 
-# 5) Init with both migrate-state and reconfigure
-echo "  terraform init -migrate-state -reconfigure \\"
-echo "    -backend-config=\"bucket=$BUCKET\" \\"
-echo "    -backend-config=\"region=$REGION\" \\"
-echo "    -backend-config=\"key=$KEY\""
-terraform init -migrate-state -reconfigure \
-  -backend-config="bucket=$BUCKET" \
-  -backend-config="region=$REGION" \
-  -backend-config="key=$KEY"
+# Echo the full S3 path for visibility.
+echo "Terraform state file stored at: s3://${BACKEND_BUCKET}/${BACKEND_KEY}"
 
-# 6) Export TF vars
+# Export job parameters as Terraform variables.
 export TF_VAR_cluster_name="$CLUSTER_NAME"
 export TF_VAR_infra_node_count="$INFRA_NODE_COUNT"
 export TF_VAR_core_node_count="$CORE_NODE_COUNT"
 
-# 7) Plan or destroy
-if [[ "$ACTION" == "create" ]]; then
-  echo " terraform plan…"
-  terraform plan -var-file=terraform.tfvars -out=tfplan
-
-  echo " terraform apply…"
-  terraform apply -auto-approve tfplan
-
-elif [[ "$ACTION" == "delete" ]]; then
-  echo " terraform destroy…"
-  terraform destroy -var-file=terraform.tfvars -auto-approve
-
+# Execute Terraform based on the ACTION parameter.
+if [ "$ACTION" == "create" ]; then
+    echo "Planning EKS cluster creation..."
+    terraform plan -var-file=terraform.tfvars -out=tfplan
+    echo "Applying Terraform plan..."
+    terraform apply -auto-approve tfplan
+elif [ "$ACTION" == "delete" ]; then
+    echo "Destroying EKS cluster and its associated node groups..."
+    terraform destroy -var-file=terraform.tfvars -auto-approve
 else
-  echo " Unknown ACTION: $ACTION"
-  exit 1
+    echo "Error: ACTION must be 'create' or 'delete'. Exiting."
+    exit 1
 fi
 
-echo " DONE: $ACTION cluster $CLUSTER_NAME"
+echo "Terraform execution completed."

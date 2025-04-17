@@ -1,6 +1,8 @@
 terraform {
   backend "s3" {
-    # The backend configuration is provided via CLI options.
+    bucket = "awsdpbucket"
+    key    = "eks-clusters/terraform.tfstate"
+    region = "us-east-1"
   }
 }
 

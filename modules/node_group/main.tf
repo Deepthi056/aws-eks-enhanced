@@ -6,7 +6,7 @@ resource "aws_eks_node_group" "this" {
 
   scaling_config {
     desired_size = var.desired_capacity
-    max_size     = var.desired_capacity + 2
+    max_size     = var.desired_capacity
     min_size     = var.desired_capacity
   }
 }
